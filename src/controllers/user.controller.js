@@ -230,7 +230,126 @@ const refreshAccesstoken=asynchandler(async(req,res)=>{
 
 })
 
+
+const changeCurrentPassword=asynchandler(async(req,res)=>{
+  const {oldpassword,newpassword}=req.body
+  const user=await User.findById(req.user?._id)
+  const isPasswordValid=await user.isPasswordCorrect(oldpassword)
+  if(!isPasswordValid){
+    throw new ApiError(400,"invalid password")
+
+  }
+
+  user.password=newpassword
+
+  return res
+  .status(200)
+  .json(200,{},"password changed successfully")
+})
+
+
+const getcurrentuser=asynchandler(async(req,res)=>{
+  return res
+  .status(200)
+  .json(200,req.user,"current user fetched succesfully")
+})
+
+const updateAccountdetails=asynchandler(async(req,res)=>{
+  const {fullname,email}=req.body
+  if(!fullname || !email){
+    throw new ApiError(400,"fullname and email is required")
+  }
+
+  const user= await User.findByIdAndUpdate(
+    req.user._id,{
+      $set:{
+        fullname:fullname,
+        email:email
+      }
+
+    },
+    {
+      new:true
+    }
+  ).select("-password ")
+  return res
+  .status(200)
+  .json(new ApiResponse(200,user,"user details updated successfully"))
+})
+
+
+const updateuserAvatar=asynchandler(async(req,res)=>{
+
+  const avatarLocalpath=req.file?.path
+  if(!avatarLocalpath){
+    throw new ApiError(400,"avatar file is required")
+  }
+
+  const avatar=await uploadOnCloudinary(avatarLocalpath)
+  if(!avatar.url){
+    throw new ApiError(400,"error while uploading  avatar")
+
+
+  }
+  const user=await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set:{
+        avatar:avatar.url
+      }
+          
+    },
+    {
+      new:true
+    }
+  ).select("-password")
+
+  return res
+  .status(200)
+  .json(new ApiResponse(200,user,"avatar updated successfully"))
+
+
+})
+
+const updateusercoverimage=asynchandler(async(req,res)=>{
+
+  const coverimageLocalpath=req.file?.path
+  if(!coverimageLocalpath){
+    throw new ApiError(400,"coverimage file is required")
+  }
+
+  const coverimage=await uploadOnCloudinary(coverimageLocalpath)
+  if(!coverimage.url){
+    throw new ApiError(400,"error while uploading  coverimage")
+
+
+  }
+  const user=await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set:{
+        coverimage:coverimage.url
+      }
+          
+    },
+    {
+      new:true
+    }
+  ).select("-password")
+
+  return res
+  .status(200)
+  .json(new ApiResponse(200,user,"coverimage updated successfully"))
+
+
+})
+
 export {
   registeruser,loginuser,logoutuser
- ,refreshAccesstoken
+ ,refreshAccesstoken,
+ changeCurrentPassword,
+ getcurrentuser,
+ updateAccountdetails,
+ updateuserAvatar,
+ updateusercoverimage
 }
